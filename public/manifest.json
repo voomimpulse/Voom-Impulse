@@ -1,0 +1,10 @@
+{
+  "name": "Voom Impulse",
+  "short_name": "Voom Impulse",
+  "description": "Pilotage des commerciaux, entreprises partenaires et missions",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F6F3EC",
+  "theme_color": "#141B2E",
+  "icons": []
+}
