@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabase } from "@/lib/supabaseClient";
 import { Entreprise, LABEL_SERVICE } from "@/lib/types";
 
 export default function Entreprises() {
@@ -11,7 +11,7 @@ export default function Entreprises() {
 
   useEffect(() => {
     async function charger() {
-      const { data } = await supabase.from("entreprises").select("*").order("nom");
+      const { data } = await getSupabase().from("entreprises").select("*").order("nom");
       setEntreprises((data ?? []) as Entreprise[]);
       setChargement(false);
     }
