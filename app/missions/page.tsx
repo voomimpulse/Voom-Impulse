@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabase } from "@/lib/supabaseClient";
 import { LABEL_SERVICE, TypeService } from "@/lib/types";
 
 interface LigneMission {
@@ -20,7 +20,7 @@ export default function Missions() {
 
   useEffect(() => {
     async function charger() {
-      const { data } = await supabase
+      const { data } = await getSupabase()
         .from("missions")
         .select("id, statut, service, taux_commission, commerciaux(nom), entreprises(nom)")
         .order("created_at", { ascending: false });
