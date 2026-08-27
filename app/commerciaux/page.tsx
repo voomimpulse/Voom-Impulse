@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabase } from "@/lib/supabaseClient";
 import { Commercial } from "@/lib/types";
 
 const LABEL_TYPE: Record<string, string> = {
@@ -22,7 +22,7 @@ export default function Commerciaux() {
 
   useEffect(() => {
     async function charger() {
-      const { data } = await supabase.from("commerciaux").select("*").order("nom");
+      const { data } = await getSupabase().from("commerciaux").select("*").order("nom");
       setCommerciaux((data ?? []) as Commercial[]);
       setChargement(false);
     }
