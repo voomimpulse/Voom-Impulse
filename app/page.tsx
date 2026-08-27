@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabase } from "@/lib/supabaseClient";
 import { Facture, LABEL_STATUT_FACTURE } from "@/lib/types";
 
 interface Stats {
@@ -30,6 +30,7 @@ export default function TableauDeBord() {
 
   useEffect(() => {
     async function charger() {
+      const supabase = getSupabase();
       const [commerciaux, entreprises, missions, factures] = await Promise.all([
         supabase.from("commerciaux").select("id", { count: "exact", head: true }),
         supabase.from("entreprises").select("id", { count: "exact", head: true }),
