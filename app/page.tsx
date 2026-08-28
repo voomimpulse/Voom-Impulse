@@ -1,121 +1,71 @@
-"use client";
-export const dynamic = "force-dynamic";
-
-import { useEffect, useState } from "react";
-import { getSupabase } from "@/lib/supabaseClient";
-import { Facture, LABEL_STATUT_FACTURE } from "@/lib/types";
-
-interface Stats {
-  nbCommerciaux: number;
-  nbEntreprises: number;
-  nbMissionsActives: number;
-  facturesImpayees: Facture[];
-  revenuService1: number;
-  revenuService2: number;
-}
-
-function Carte({ label, valeur, note }: { label: string; valeur: string; note?: string }) {
+function MarquePulse() {
   return (
-    <div className="bg-white border border-ardoise/10 rounded-sm p-6">
-      <p className="text-xs uppercase tracking-wide text-ardoise/60">{label}</p>
-      <p className="chiffre font-display text-3xl mt-2 text-encre">{valeur}</p>
-      {note && <p className="text-xs text-ardoise/50 mt-1">{note}</p>}
-    </div>
+    <svg width="96" height="26" viewBox="0 0 72 20" fill="none" aria-hidden="true">
+      <path
+        d="M0 10 H20 L26 2 L32 18 L38 6 L42 10 H72"
+        stroke="#C8963E"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
   );
 }
 
-export default function TableauDeBord() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [chargement, setChargement] = useState(true);
-
-  useEffect(() => {
-    async function charger() {
-      const supabase = getSupabase();
-      const [commerciaux, entreprises, missions, factures] = await Promise.all([
-        supabase.from("commerciaux").select("id", { count: "exact", head: true }),
-        supabase.from("entreprises").select("id", { count: "exact", head: true }),
-        supabase.from("missions").select("id", { count: "exact", head: true }).eq("statut", "active"),
-        supabase.from("factures").select("*"),
-      ]);
-
-      const toutesFactures = (factures.data ?? []) as Facture[];
-      const impayees = toutesFactures.filter((f) => f.statut !== "payee");
-      const revenuService1 = toutesFactures
-        .filter((f) => f.service === "service_1_mise_a_disposition" && f.statut === "payee")
-        .reduce((total, f) => total + Number(f.montant), 0);
-      const revenuService2 = toutesFactures
-        .filter((f) => f.service === "service_2_gestion_complete" && f.statut === "payee")
-        .reduce((total, f) => total + Number(f.montant), 0);
-
-      setStats({
-        nbCommerciaux: commerciaux.count ?? 0,
-        nbEntreprises: entreprises.count ?? 0,
-        nbMissionsActives: missions.count ?? 0,
-        facturesImpayees: impayees,
-        revenuService1,
-        revenuService2,
-      });
-      setChargement(false);
-    }
-    charger();
-  }, []);
-
+export default function Accueil() {
   return (
     <div>
-      <h1 className="font-display text-2xl text-encre">Tableau de bord</h1>
-      <p className="text-sm text-ardoise/60 mt-1">Vue d'ensemble des deux services</p>
+      <header className="px-8 py-6 flex items-center justify-between border-b border-ardoise/10">
+        <div className="flex items-center gap-3">
+          <MarquePulse />
+          <span className="font-display text-lg text-encre">Voom Impulse</span>
+        </div>
+      </header>
 
-      {chargement && <p className="mt-8 text-sm text-ardoise/50">Chargement…</p>}
+      <section className="px-8 py-20 max-w-3xl">
+        <p className="text-xs uppercase tracking-widest text-ocre mb-4">Marketing opérationnel</p>
+        <h1 className="font-display text-4xl md:text-5xl leading-tight text-encre">
+          Des commerciaux formés, suivis, et prêts à représenter votre marque.
+        </h1>
+        <p className="mt-6 text-ardoise/70 text-lg leading-relaxed">
+          Voom Impulse recrute, forme et déploie des commerciaux sur le terrain — en mise à
+          disposition pour renforcer vos équipes, ou en gestion complète de votre prospection,
+          du recrutement jusqu'au résultat.
+        </p>
+      </section>
 
-      {stats && (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-            <Carte label="Commerciaux au vivier" valeur={String(stats.nbCommerciaux)} />
-            <Carte label="Entreprises partenaires" valeur={String(stats.nbEntreprises)} />
-            <Carte label="Missions actives" valeur={String(stats.nbMissionsActives)} />
-            <Carte
-              label="Factures impayées"
-              valeur={String(stats.facturesImpayees.length)}
-              note={stats.facturesImpayees.length > 0 ? "à relancer" : undefined}
-            />
-          </div>
+      <section className="px-8 pb-20 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl">
+        <div className="border border-ardoise/10 bg-white rounded-sm p-8">
+          <p className="text-xs uppercase tracking-wide text-ardoise/50">Pour les entreprises</p>
+          <h2 className="font-display text-2xl text-encre mt-2">Renforcez votre force de vente</h2>
+          <ul className="mt-5 space-y-2 text-sm text-ardoise/70">
+            <li>Mise à disposition de commerciaux qualifiés, suivis via tableau de bord</li>
+            <li>Ou prise en charge complète de votre prospection commerciale</li>
+            <li>Remplacement assuré en cas d'absence</li>
+          </ul>
+          <a href="mailto:contact@voomimpulse.com" className="inline-block mt-6 bg-encre text-ivoire text-sm px-5 py-2.5 rounded-sm hover:bg-ardoise transition-colors">
+            Discuter de vos besoins
+          </a>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <Carte
-              label="Revenu encaissé — Service 1"
-              valeur={`${stats.revenuService1.toLocaleString("fr-FR")} FCFA`}
-              note="Mise à disposition, 15 000 FCFA/mois/commercial"
-            />
-            <Carte
-              label="Revenu encaissé — Service 2"
-              valeur={`${stats.revenuService2.toLocaleString("fr-FR")} FCFA`}
-              note="Commission sur marge, gestion complète"
-            />
-          </div>
+        <div className="border border-ardoise/10 bg-white rounded-sm p-8">
+          <p className="text-xs uppercase tracking-wide text-ardoise/50">Pour les commerciaux</p>
+          <h2 className="font-display text-2xl text-encre mt-2">Rejoignez le vivier</h2>
+          <ul className="mt-5 space-y-2 text-sm text-ardoise/70">
+            <li>Missions terrain, événementiel, promotion, digital, télévente</li>
+            <li>Suivi de vos performances et de votre progression</li>
+            <li>Plusieurs types de contrats selon la mission</li>
+          </ul>
+          <a href="mailto:contact@voomimpulse.com" className="inline-block mt-6 border border-ocre text-ocre text-sm px-5 py-2.5 rounded-sm hover:bg-ocre hover:text-ivoire transition-colors">
+            Postuler
+          </a>
+        </div>
+      </section>
 
-          {stats.facturesImpayees.length > 0 && (
-            <div className="mt-8">
-              <h2 className="font-display text-lg text-encre">Factures à suivre</h2>
-              <div className="mt-3 divide-y divide-ardoise/10 bg-white border border-ardoise/10 rounded-sm">
-                {stats.facturesImpayees.map((f) => (
-                  <div key={f.id} className="flex items-center justify-between px-5 py-3 text-sm">
-                    <span className="text-encre/80">{f.montant.toLocaleString("fr-FR")} FCFA</span>
-                    <span
-                      className={
-                        f.statut === "en_retard"
-                          ? "text-rouille font-medium"
-                          : "text-ocre font-medium"
-                      }
-                    >
-                      {LABEL_STATUT_FACTURE[f.statut]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
+      <footer className="px-8 py-8 border-t border-ardoise/10 text-xs text-ardoise/40">
+        Voom Impulse — Abidjan, Côte d'Ivoire
+      </footer>
     </div>
   );
 }
