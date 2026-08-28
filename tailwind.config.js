@@ -4,14 +4,14 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        encre: "#141B2E",      // fond profond, sections structurantes
-        ardoise: "#1F2A44",    // panneaux, cartes
-        ivoire: "#F6F3EC",     // fond clair des zones de contenu
-        ocre: "#C8963E",       // accent signature (or/ocre, référence textile)
-        ocreclair: "#E4B968",
-        vert: "#3F6B4F",       // statut positif / payé
-        rouille: "#A8462F",    // statut alerte / impayé
-        ardoiseclair: "#3A4766",
+        encre: "#123A5C",
+        ardoise: "#1F5C86",
+        ivoire: "#FFFFFF",
+        ocre: "#F0A22E",
+        ocreclair: "#F7C46C",
+        vert: "#3F6B4F",
+        rouille: "#A8462F",
+        ardoiseclair: "#4E85AE",
       },
       fontFamily: {
         display: ["'Fraunces'", "serif"],
