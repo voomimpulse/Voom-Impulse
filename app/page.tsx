@@ -89,23 +89,22 @@ export default function Accueil() {
         </button>
       </header>
 
-      <section className="relative">
-        <div className="px-5 pt-2 pb-6">
+      <section className="relative h-72 overflow-hidden">
+        <img src="/cover.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/60 to-transparent" />
+        <div className="relative px-5 pt-4 max-w-[65%]">
           <h1 className="font-display text-2xl leading-snug text-encre">
             Des commerciaux formés, suivis et prêts pour votre marque.
           </h1>
-          <p className="mt-3 text-sm text-ardoise/70 leading-relaxed">
+          <p className="mt-3 text-sm text-ardoise/80 leading-relaxed">
             Voom Impulse accompagne les entreprises dans le recrutement et la gestion de leurs
             commerciaux, tout en proposant aux professionnels des missions adaptées à leur profil.
           </p>
         </div>
-        <div className="relative h-56 overflow-hidden">
-          <img src="/cover.jpg" alt="" className="w-full h-full object-cover" />
-          <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 400 40" preserveAspectRatio="none">
-            <path d="M0,20 C100,40 300,0 400,20 L400,40 L0,40 Z" fill="#F0A22E" opacity="0.9" />
-            <path d="M0,28 C120,45 280,10 400,28 L400,40 L0,40 Z" fill="#123A5C" />
-          </svg>
-        </div>
+        <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 400 40" preserveAspectRatio="none">
+          <path d="M0,20 C100,40 300,0 400,20 L400,40 L0,40 Z" fill="#F0A22E" opacity="0.9" />
+          <path d="M0,28 C120,45 280,10 400,28 L400,40 L0,40 Z" fill="#123A5C" />
+        </svg>
       </section>
 
       <main className="px-5 py-6 space-y-4 bg-white">
