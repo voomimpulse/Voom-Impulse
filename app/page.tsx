@@ -3,6 +3,26 @@
 import { useState } from "react";
 import { getSupabase } from "@/lib/supabaseClient";
 
+const TYPES_COMMERCIAL = [
+  { valeur: "terrain", label: "Commercial terrain" },
+  { valeur: "hote_hotesse", label: "Hôte / hôtesse" },
+  { valeur: "promoteur", label: "Promoteur" },
+  { valeur: "animateur", label: "Animateur" },
+  { valeur: "rayonniste", label: "Rayonniste" },
+  { valeur: "superviseur", label: "Superviseur" },
+  { valeur: "teleoperateur", label: "Téléopérateur" },
+  { valeur: "commercial_digital", label: "Commercial digital" },
+];
+
+const STYLES_ACTIVITE = [
+  { valeur: "terrain", label: "Terrain" },
+  { valeur: "operationnel", label: "Opérationnel" },
+  { valeur: "evenementiel", label: "Événementiel" },
+  { valeur: "promotionnel", label: "Promotionnel" },
+  { valeur: "digital", label: "Digital" },
+  { valeur: "teletravail", label: "Télétravail" },
+];
+
 function IconeEntreprise() {
   return (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6">
@@ -29,25 +49,106 @@ function Chevron() {
   );
 }
 
+function ChampClair({ label, value, onChange, required = true }: {
+  label: string; value: string; onChange: (v: string) => void; required?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className="text-xs text-white/70">{label}</span>
+      <input
+        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full border border-white/30 bg-white/10 text-white placeholder-white/40 rounded-sm px-3 py-2 text-sm"
+      />
+    </label>
+  );
+}
+
+function SelectClair({ label, value, onChange, options, sombre = false }: {
+  label: string; value: string; onChange: (v: string) => void; options: { valeur: string; label: string }[]; sombre?: boolean;
+}) {
+  return (
+    <label className="block">
+      <span className={sombre ? "text-xs text-encre/70" : "text-xs text-white/70"}>{label}</span>
+      <select
+        required
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={
+          sombre
+            ? "mt-1 w-full border border-encre/20 bg-white text-encre rounded-sm px-3 py-2 text-sm"
+            : "mt-1 w-full border border-white/30 bg-white/10 text-white rounded-sm px-3 py-2 text-sm"
+        }
+      >
+        <option value="" className="text-encre">Sélectionner…</option>
+        {options.map((o) => (
+          <option key={o.valeur} value={o.valeur} className="text-encre">{o.label}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ZoneClaire({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="block">
+      <span className="text-xs text-white/70">{label}</span>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={2}
+        className="mt-1 w-full border border-white/30 bg-white/10 text-white placeholder-white/40 rounded-sm px-3 py-2 text-sm"
+      />
+    </label>
+  );
+}
+
 function FormulaireEntreprise({ onDone }: { onDone: () => void }) {
   const [nom, setNom] = useState("");
   const [contact, setContact] = useState("");
   const [telephone, setTelephone] = useState("");
+  const [secteur, setSecteur] = useState("");
+  const [besoins, setBesoins] = useState("");
+  const [objectifs, setObjectifs] = useState("");
+  const [collaboration, setCollaboration] = useState("");
   const [envoi, setEnvoi] = useState(false);
 
   async function envoyer(e: React.FormEvent) {
     e.preventDefault();
     setEnvoi(true);
-    await getSupabase().from("entreprises").insert({ nom, contact_nom: contact, contact_telephone: telephone });
+    await getSupabase().from("entreprises").insert({
+      nom,
+      contact_nom: contact,
+      contact_telephone: telephone,
+      secteur_activite: secteur,
+      besoins_ressources: besoins,
+      objectifs_commerciaux: objectifs,
+      type_collaboration_souhaite: collaboration || null,
+    });
     onDone();
   }
 
   return (
-    <form onSubmit={envoyer} className="space-y-2.5 mt-4">
-      <input required placeholder="Nom de l'entreprise" value={nom} onChange={(e) => setNom(e.target.value)} className="w-full border border-white/30 bg-white/10 placeholder-white/60 text-white rounded-sm px-3 py-2 text-sm" />
-      <input required placeholder="Nom du contact" value={contact} onChange={(e) => setContact(e.target.value)} className="w-full border border-white/30 bg-white/10 placeholder-white/60 text-white rounded-sm px-3 py-2 text-sm" />
-      <input required placeholder="Téléphone" value={telephone} onChange={(e) => setTelephone(e.target.value)} className="w-full border border-white/30 bg-white/10 placeholder-white/60 text-white rounded-sm px-3 py-2 text-sm" />
-      <button disabled={envoi} className="w-full bg-white text-encre font-medium text-sm px-4 py-2.5 rounded-sm">{envoi ? "Envoi…" : "Valider l'inscription"}</button>
+    <form onSubmit={envoyer} className="space-y-3 mt-4">
+      <ChampClair label="Nom de l'entreprise" value={nom} onChange={setNom} />
+      <ChampClair label="Nom du contact" value={contact} onChange={setContact} />
+      <ChampClair label="Téléphone" value={telephone} onChange={setTelephone} />
+      <ChampClair label="Secteur d'activité" value={secteur} onChange={setSecteur} required={false} />
+      <SelectClair
+        label="Type de collaboration souhaitée"
+        value={collaboration}
+        onChange={setCollaboration}
+        options={[
+          { valeur: "service_1_mise_a_disposition", label: "Mise à disposition de commerciaux" },
+          { valeur: "service_2_gestion_complete", label: "Gestion complète de la prospection" },
+        ]}
+      />
+      <ZoneClaire label="Vos besoins en ressources" value={besoins} onChange={setBesoins} />
+      <ZoneClaire label="Vos objectifs commerciaux" value={objectifs} onChange={setObjectifs} />
+      <button disabled={envoi} className="w-full bg-white text-encre font-medium text-sm px-4 py-2.5 rounded-sm">
+        {envoi ? "Envoi…" : "Envoyer ma demande"}
+      </button>
     </form>
   );
 }
@@ -56,21 +157,42 @@ function FormulaireCommercial({ onDone }: { onDone: () => void }) {
   const [nom, setNom] = useState("");
   const [telephone, setTelephone] = useState("");
   const [zone, setZone] = useState("");
+  const [typeCommercial, setTypeCommercial] = useState("");
+  const [styleActivite, setStyleActivite] = useState("");
+  const [experience, setExperience] = useState("");
+  const [competences, setCompetences] = useState("");
+  const [ambitions, setAmbitions] = useState("");
   const [envoi, setEnvoi] = useState(false);
 
   async function envoyer(e: React.FormEvent) {
     e.preventDefault();
     setEnvoi(true);
-    await getSupabase().from("commerciaux").insert({ nom, telephone, zone_geographique: zone });
+    await getSupabase().from("commerciaux").insert({
+      nom,
+      telephone,
+      zone_geographique: zone,
+      type_commercial: typeCommercial || null,
+      style_activite: styleActivite || null,
+      experience,
+      competences: competences ? competences.split(",").map((c) => c.trim()) : [],
+      ambitions_commerciales: ambitions,
+    });
     onDone();
   }
 
   return (
-    <form onSubmit={envoyer} className="space-y-2.5 mt-4">
-      <input required placeholder="Nom complet" value={nom} onChange={(e) => setNom(e.target.value)} className="w-full border border-white/30 bg-white/10 placeholder-white/60 text-white rounded-sm px-3 py-2 text-sm" />
-      <input required placeholder="Téléphone" value={telephone} onChange={(e) => setTelephone(e.target.value)} className="w-full border border-white/30 bg-white/10 placeholder-white/60 text-white rounded-sm px-3 py-2 text-sm" />
-      <input required placeholder="Zone (ex : Cocody)" value={zone} onChange={(e) => setZone(e.target.value)} className="w-full border border-white/30 bg-white/10 placeholder-white/60 text-white rounded-sm px-3 py-2 text-sm" />
-      <button disabled={envoi} className="w-full bg-white text-ocre font-medium text-sm px-4 py-2.5 rounded-sm">{envoi ? "Envoi…" : "Valider l'inscription"}</button>
+    <form onSubmit={envoyer} className="space-y-3 mt-4">
+      <ChampClair label="Nom complet" value={nom} onChange={setNom} />
+      <ChampClair label="Téléphone" value={telephone} onChange={setTelephone} />
+      <ChampClair label="Zone (ex : Cocody, Yopougon…)" value={zone} onChange={setZone} />
+      <SelectClair label="Type de commercial" value={typeCommercial} onChange={setTypeCommercial} options={TYPES_COMMERCIAL} sombre />
+      <SelectClair label="Style d'activité" value={styleActivite} onChange={setStyleActivite} options={STYLES_ACTIVITE} sombre />
+      <ZoneClaire label="Votre expérience pratique" value={experience} onChange={setExperience} />
+      <ChampClair label="Compétences (séparées par une virgule)" value={competences} onChange={setCompetences} required={false} />
+      <ZoneClaire label="Vos ambitions commerciales" value={ambitions} onChange={setAmbitions} />
+      <button disabled={envoi} className="w-full bg-encre text-white font-medium text-sm px-4 py-2.5 rounded-sm">
+        {envoi ? "Envoi…" : "Créer mon profil"}
+      </button>
     </form>
   );
 }
@@ -91,12 +213,12 @@ export default function Accueil() {
 
       <section className="relative h-72 overflow-hidden">
         <img src="/cover.jpg" alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/60 to-transparent" />
-        <div className="relative px-5 pt-4 max-w-[65%]">
-          <h1 className="font-display text-2xl leading-snug text-encre">
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/85 to-white/10" />
+        <div className="relative px-5 pt-4 max-w-[68%]">
+          <h1 className="font-display text-2xl leading-snug text-encre font-semibold">
             Des commerciaux formés, suivis et prêts pour votre marque.
           </h1>
-          <p className="mt-3 text-sm text-ardoise/80 leading-relaxed">
+          <p className="mt-3 text-sm text-encre/75 leading-relaxed">
             Voom Impulse accompagne les entreprises dans le recrutement et la gestion de leurs
             commerciaux, tout en proposant aux professionnels des missions adaptées à leur profil.
           </p>
@@ -130,7 +252,7 @@ export default function Accueil() {
           </p>
 
           {ouvert === "entreprise" && !faitEntreprise && <FormulaireEntreprise onDone={() => setFaitEntreprise(true)} />}
-          {faitEntreprise && <p className="text-white text-sm mt-4">Inscription enregistrée — nous vous recontactons rapidement.</p>}
+          {faitEntreprise && <p className="text-white text-sm mt-4">Demande enregistrée — nous évaluons votre besoin et revenons vers vous.</p>}
         </div>
 
         <div className="bg-ocre rounded-xl p-5">
@@ -155,7 +277,7 @@ export default function Accueil() {
           </p>
 
           {ouvert === "commercial" && !faitCommercial && <FormulaireCommercial onDone={() => setFaitCommercial(true)} />}
-          {faitCommercial && <p className="text-white text-sm mt-4">Profil enregistré — nous vous recontactons rapidement.</p>}
+          {faitCommercial && <p className="text-white text-sm mt-4">Profil enregistré — vous serez contacté dès qu'une mission correspond.</p>}
         </div>
 
         {ouvert && (
