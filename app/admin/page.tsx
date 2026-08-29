@@ -84,3 +84,38 @@ export default function TableauDeBord() {
             <Carte
               label="Revenu encaissé — Service 1"
               valeur={`${stats.revenuService1.toLocaleString("fr-FR")} FCFA`}
+              note="Mise à disposition, 15 000 FCFA/mois/commercial"
+            />
+            <Carte
+              label="Revenu encaissé — Service 2"
+              valeur={`${stats.revenuService2.toLocaleString("fr-FR")} FCFA`}
+              note="Commission sur marge, gestion complète"
+            />
+          </div>
+
+          {stats.facturesImpayees.length > 0 && (
+            <div className="mt-8">
+              <h2 className="font-display text-lg text-encre">Factures à suivre</h2>
+              <div className="mt-3 divide-y divide-ardoise/10 bg-white border border-ardoise/10 rounded-sm">
+                {stats.facturesImpayees.map((f) => (
+                  <div key={f.id} className="flex items-center justify-between px-5 py-3 text-sm">
+                    <span className="text-encre/80">{f.montant.toLocaleString("fr-FR")} FCFA</span>
+                    <span
+                      className={
+                        f.statut === "en_retard"
+                          ? "text-rouille font-medium"
+                          : "text-ocre font-medium"
+                      }
+                    >
+                      {LABEL_STATUT_FACTURE[f.statut]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
