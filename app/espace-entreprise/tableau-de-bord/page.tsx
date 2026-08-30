@@ -58,7 +58,7 @@ function FormulaireNouvelleMission({ entrepriseId, onCree }: { entrepriseId: str
           className="mt-1 w-full border border-ardoise/20 rounded-sm px-3 py-2 text-sm" />
       </label>
       <div className="pt-2 border-t border-ardoise/10">
-        <p className="text-xs text-ardoise/60 mb-2">Zone de mission (optionnel)</p>
+        <p className="text-xs text-ardoise/60 mb-2">Zone de mission (pour l'auto-détection)</p>
         <div className="grid grid-cols-2 gap-3">
           <input placeholder="Latitude" value={latitude} onChange={(e) => setLatitude(e.target.value)}
             className="w-full border border-ardoise/20 rounded-sm px-3 py-2 text-sm" />
@@ -110,6 +110,7 @@ export default function TableauDeBordEntreprise() {
   const [pret, setPret] = useState(false);
   const [entrepriseId, setEntrepriseId] = useState<string | null>(null);
   const [missions, setMissions] = useState<any[]>([]);
+  const [suivi, setSuivi] = useState<any[]>([]);
   const [factures, setFactures] = useState<any[]>([]);
   const [rattachements, setRattachements] = useState<any[]>([]);
   const [formOuvert, setFormOuvert] = useState(false);
@@ -125,14 +126,30 @@ export default function TableauDeBordEntreprise() {
     if (profil?.role !== "entreprise" || !profil.entreprise_id) { router.push("/login"); return; }
 
     setEntrepriseId(profil.entreprise_id);
+    const aujourdhui = new Date().toISOString().slice(0, 10);
     const [m, f, r] = await Promise.all([
-      supabase.from("missions").select("id, statut, service, commerciaux(nom)").eq("entreprise_id", profil.entreprise_id),
+      supabase.from("missions").select("id, statut, service, latitude, commerciaux(id, nom)").eq("entreprise_id", profil.entreprise_id),
       supabase.from("factures").select("*").eq("entreprise_id", profil.entreprise_id),
       supabase.from("rattachements").select("id, service, statut, date_debut, commerciaux(nom)").eq("entreprise_id", profil.entreprise_id),
     ]);
     setMissions(m.data ?? []);
     setFactures(f.data ?? []);
     setRattachements(r.data ?? []);
+
+    const missionsAvecZone = (m.data ?? []).filter((mi: any) => mi.latitude && mi.commerciaux);
+    if (missionsAvecZone.length > 0) {
+      const ids = missionsAvecZone.map((mi: any) => mi.id);
+      const { data: activations } = await supabase.from("activations").select("mission_id, statut, heure_activation").in("mission_id", ids).eq("date_jour", aujourdhui);
+      const activationsParMission: Record<string, any> = {};
+      (activations ?? []).forEach((a: any) => { activationsParMission[a.mission_id] = a; });
+      setSuivi(missionsAvecZone.map((mi: any) => ({
+        nom: mi.commerciaux.nom,
+        activation: activationsParMission[mi.id] ?? null,
+      })));
+    } else {
+      setSuivi([]);
+    }
+
     setPret(true);
   }
 
@@ -148,6 +165,28 @@ export default function TableauDeBordEntreprise() {
           Se déconnecter
         </button>
       </div>
+
+      {suivi.length > 0 && (
+        <>
+          <h2 className="text-sm font-medium text-ardoise/60 mt-8">Suivi du jour</h2>
+          <div className="mt-3 bg-white border border-ardoise/10 rounded-sm divide-y divide-ardoise/10">
+            {suivi.map((s, i) => (
+              <div key={i} className="px-4 py-3 flex items-center justify-between text-sm">
+                <span>{s.nom}</span>
+                {s.activation?.statut === "actif" ? (
+                  <span className="text-xs text-vert">
+                    Actif depuis {new Date(s.activation.heure_activation).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                ) : s.activation?.statut === "hors_zone" ? (
+                  <span className="text-xs text-ocre">Hors zone</span>
+                ) : (
+                  <span className="text-xs text-rouille">Absent</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <h2 className="text-sm font-medium text-ardoise/60 mt-8">Mes rattachements</h2>
       <div className="mt-3 bg-white border border-ardoise/10 rounded-sm divide-y divide-ardoise/10">
