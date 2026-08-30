@@ -10,6 +10,7 @@ const LIENS_NAV = [
   { href: "/admin/entreprises", label: "Entreprises" },
   { href: "/admin/commerciaux", label: "Commerciaux" },
   { href: "/admin/missions", label: "Missions" },
+  { href: "/admin/rattachements", label: "Rattachements" },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
