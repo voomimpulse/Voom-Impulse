@@ -15,18 +15,27 @@ export default function Login() {
     e.preventDefault();
     setEnvoi(true);
     setErreur("");
-    const supabase = getSupabase();
-    const { data: auth, error } = await supabase.auth.signInWithPassword({ email, password: motDePasse });
-    if (error || !auth.user) {
-      setErreur("Email ou mot de passe incorrect.");
+    try {
+      const supabase = getSupabase();
+      const { data: auth, error } = await supabase.auth.signInWithPassword({ email, password: motDePasse });
+      if (error || !auth.user) {
+        setErreur(error?.message ?? "Email ou mot de passe incorrect.");
+        return;
+      }
+      const { data: profil, error: erreurProfil } = await supabase.from("profils").select("role").eq("id", auth.user.id).single();
+      if (erreurProfil) {
+        setErreur("Erreur profil : " + erreurProfil.message);
+        return;
+      }
+      if (profil?.role === "admin") router.push("/admin");
+      else if (profil?.role === "entreprise") router.push("/espace-entreprise/tableau-de-bord");
+      else if (profil?.role === "commercial") router.push("/espace-commercial/tableau-de-bord");
+      else setErreur("Rôle inconnu.");
+    } catch (err: any) {
+      setErreur("Erreur technique : " + (err?.message ?? String(err)));
+    } finally {
       setEnvoi(false);
-      return;
     }
-    const { data: profil } = await supabase.from("profils").select("role").eq("id", auth.user.id).single();
-    if (profil?.role === "admin") router.push("/admin");
-    else if (profil?.role === "entreprise") router.push("/espace-entreprise/tableau-de-bord");
-    else if (profil?.role === "commercial") router.push("/espace-commercial/tableau-de-bord");
-    else { setErreur("Rôle inconnu."); setEnvoi(false); }
   }
 
   return (
@@ -44,7 +53,7 @@ export default function Login() {
           <input required type="password" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)}
             className="mt-1 w-full border border-ardoise/20 rounded-sm px-3 py-2 text-sm" />
         </label>
-        {erreur && <p className="text-xs text-rouille mb-3">{erreur}</p>}
+        {erreur && <p className="text-xs text-rouille mb-3 break-words">{erreur}</p>}
         <button disabled={envoi} className="w-full bg-encre text-white text-sm px-4 py-2.5 rounded-sm">
           {envoi ? "Connexion…" : "Se connecter"}
         </button>
