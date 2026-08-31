@@ -161,6 +161,7 @@ export default function TableauDeBordEntreprise() {
     <div className="min-h-screen bg-ivoire px-5 py-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-xl text-encre">Mon espace entreprise</h1>
+        <a href="/espace-entreprise/stock" className="text-xs text-ardoise/50 mt-1 block">Gérer mes stocks →</a>
         <button onClick={async () => { await getSupabase().auth.signOut(); router.push("/"); }} className="text-xs text-ardoise/50">
           Se déconnecter
         </button>
