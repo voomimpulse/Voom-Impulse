@@ -89,6 +89,8 @@ function BoutonActivation({ mission, commercialId, activation, onActive }: {
 }
 
 function FormulaireVente({ missionId, onEnregistre }: { missionId: string; onEnregistre: () => void }) {
+  const [produit, setProduit] = useState("");
+  const [quantite, setQuantite] = useState("");
   const [montant, setMontant] = useState("");
   const [description, setDescription] = useState("");
   const [envoi, setEnvoi] = useState(false);
@@ -103,9 +105,11 @@ function FormulaireVente({ missionId, onEnregistre }: { missionId: string; onEnr
       mission_id: missionId,
       description,
       ventes_realisees: Number(montant),
+      produit: produit || null,
+      quantite_vendue: quantite ? Number(quantite) : null,
     });
     if (error) { setErreur(error.message); setEnvoi(false); return; }
-    setMontant(""); setDescription(""); setOuvert(false); setEnvoi(false);
+    setProduit(""); setQuantite(""); setMontant(""); setDescription(""); setOuvert(false); setEnvoi(false);
     onEnregistre();
   }
 
@@ -115,6 +119,10 @@ function FormulaireVente({ missionId, onEnregistre }: { missionId: string; onEnr
 
   return (
     <form onSubmit={enregistrer} className="mt-2 space-y-2 bg-ivoire border border-ardoise/10 rounded-sm p-3">
+      <input placeholder="Produit vendu (ex : Pack Orange 4G)" value={produit} onChange={(e) => setProduit(e.target.value)}
+        className="w-full border border-ardoise/20 rounded-sm px-3 py-2 text-sm" />
+      <input type="number" step="1" placeholder="Quantité vendue" value={quantite} onChange={(e) => setQuantite(e.target.value)}
+        className="w-full border border-ardoise/20 rounded-sm px-3 py-2 text-sm" />
       <input required type="number" step="0.01" placeholder="Montant vendu (FCFA)" value={montant} onChange={(e) => setMontant(e.target.value)}
         className="w-full border border-ardoise/20 rounded-sm px-3 py-2 text-sm" />
       <input placeholder="Description (optionnel)" value={description} onChange={(e) => setDescription(e.target.value)}
