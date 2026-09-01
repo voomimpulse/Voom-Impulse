@@ -12,17 +12,20 @@ const LIENS_PRINCIPAL = [
   { href: "/admin/commerciaux", label: "Commerciaux" },
   { href: "/admin/rattachements", label: "Rattachements" },
   { href: "/admin/missions", label: "Missions" },
+  { href: "/admin/factures", label: "Factures" },
 ];
 
 const LIENS_GESTION_COMPLETE = [
   { href: "/admin", label: "Tableau de bord" },
   { href: "/admin/commerciaux", label: "Commerciaux" },
   { href: "/admin/missions", label: "Missions (Gestion complète)" },
+  { href: "/admin/factures", label: "Factures" },
 ];
 
 const LIENS_MISE_A_DISPOSITION = [
   { href: "/admin", label: "Tableau de bord" },
   { href: "/admin/rattachements", label: "Rattachements (Mise à disposition)" },
+  { href: "/admin/factures", label: "Factures" },
 ];
 
 const LABEL_TYPE_ADMIN: Record<TypeAdmin, string> = {
