@@ -12,6 +12,7 @@ const LIENS_PRINCIPAL = [
   { href: "/admin/commerciaux", label: "Commerciaux" },
   { href: "/admin/rattachements", label: "Rattachements" },
   { href: "/admin/missions", label: "Missions" },
+  { href: "/admin/stock", label: "Stock" },
   { href: "/admin/factures", label: "Factures" },
 ];
 
@@ -19,6 +20,7 @@ const LIENS_GESTION_COMPLETE = [
   { href: "/admin", label: "Tableau de bord" },
   { href: "/admin/commerciaux", label: "Commerciaux" },
   { href: "/admin/missions", label: "Missions (Gestion complète)" },
+  { href: "/admin/stock", label: "Stock" },
   { href: "/admin/factures", label: "Factures" },
 ];
 
