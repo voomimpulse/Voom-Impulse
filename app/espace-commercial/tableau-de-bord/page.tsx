@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabaseClient";
 
@@ -44,48 +44,43 @@ function distanceMetres(lat1: number, lon1: number, lat2: number, lon2: number) 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function BoutonActivation({ mission, commercialId, activation, onActive }: {
-  mission: any; commercialId: string; activation: any; onActive: () => void;
-}) {
-  const [verification, setVerification] = useState(false);
-  const [message, setMessage] = useState("");
+function useDetectionAutomatique(missions: any[], commercialId: string | null, onChange: () => void) {
+  const dernierEtat = useRef<Record<string, string>>({});
 
-  function verifierPresence() {
-    if (!navigator.geolocation) { setMessage("Localisation non disponible sur cet appareil."); return; }
-    setVerification(true);
-    setMessage("");
-    navigator.geolocation.getCurrentPosition(
+  useEffect(() => {
+    if (!commercialId || !navigator.geolocation) return;
+    const missionsAvecZone = missions.filter((m) => m.latitude && m.longitude);
+    if (missionsAvecZone.length === 0) return;
+
+    const watchId = navigator.geolocation.watchPosition(
       async (position) => {
-        const distance = distanceMetres(position.coords.latitude, position.coords.longitude, Number(mission.latitude), Number(mission.longitude));
-        const dansLaZone = distance <= (mission.rayon_metres ?? 200);
-        await getSupabase().from("activations").upsert({
-          mission_id: mission.id, commercial_id: commercialId,
-          date_jour: new Date().toISOString().slice(0, 10),
-          heure_activation: dansLaZone ? new Date().toISOString() : null,
-          statut: dansLaZone ? "actif" : "hors_zone",
-        }, { onConflict: "mission_id,date_jour" });
-        setMessage(dansLaZone ? "Présence confirmée — vous êtes bien dans la zone." : `Vous êtes à ${Math.round(distance)} m de la zone (rayon autorisé : ${mission.rayon_metres ?? 200} m).`);
-        setVerification(false);
-        onActive();
+        const supabase = getSupabase();
+        for (const mission of missionsAvecZone) {
+          const distance = distanceMetres(
+            position.coords.latitude, position.coords.longitude,
+            Number(mission.latitude), Number(mission.longitude)
+          );
+          const dansLaZone = distance <= (mission.rayon_metres ?? 200);
+          const nouvelEtat = dansLaZone ? "actif" : "hors_zone";
+          if (dernierEtat.current[mission.id] !== nouvelEtat) {
+            dernierEtat.current[mission.id] = nouvelEtat;
+            await supabase.from("activations").upsert({
+              mission_id: mission.id,
+              commercial_id: commercialId,
+              date_jour: new Date().toISOString().slice(0, 10),
+              heure_activation: dansLaZone ? new Date().toISOString() : null,
+              statut: nouvelEtat,
+            }, { onConflict: "mission_id,date_jour" });
+            onChange();
+          }
+        }
       },
-      () => { setMessage("Impossible d'obtenir votre position — vérifiez l'autorisation de localisation."); setVerification(false); },
-      { enableHighAccuracy: true }
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 15000 }
     );
-  }
 
-  const dejaActif = activation?.statut === "actif";
-  return (
-    <div className="mt-2">
-      {dejaActif ? (
-        <p className="text-xs text-vert">Activé aujourd'hui à {new Date(activation.heure_activation).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p>
-      ) : (
-        <button onClick={verifierPresence} disabled={verification} className="text-xs bg-ocre text-white px-3 py-1.5 rounded-sm">
-          {verification ? "Vérification…" : "Je suis arrivé — vérifier ma présence"}
-        </button>
-      )}
-      {message && <p className="text-xs text-ardoise/50 mt-1">{message}</p>}
-    </div>
-  );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [missions, commercialId]);
 }
 
 function FormulaireVente({ missionId, onEnregistre }: { missionId: string; onEnregistre: () => void }) {
@@ -176,6 +171,7 @@ export default function TableauDeBordCommercial() {
   }
 
   useEffect(() => { charger(); }, []);
+  useDetectionAutomatique(missions, commercialId, charger);
 
   if (!pret) return <div className="min-h-screen flex items-center justify-center text-sm text-ardoise/50">Chargement…</div>;
 
@@ -187,6 +183,10 @@ export default function TableauDeBordCommercial() {
           Se déconnecter
         </button>
       </div>
+
+      <p className="text-xs text-ardoise/40 mt-2">
+        Laissez cette page ouverte sur le terrain — votre présence est détectée automatiquement.
+      </p>
 
       {totalCommissions > 0 && (
         <div className="bg-encre rounded-sm p-4 mt-6">
@@ -217,20 +217,33 @@ export default function TableauDeBordCommercial() {
       <h2 className="text-sm font-medium text-ardoise/60 mt-6">Mes missions du jour</h2>
       <div className="mt-3 bg-white border border-ardoise/10 rounded-sm divide-y divide-ardoise/10">
         {missions.length === 0 && <p className="px-4 py-4 text-sm text-ardoise/40">Aucune mission pour l'instant.</p>}
-        {missions.map((m) => (
-          <div key={m.id} className="px-4 py-3">
-            <div className="flex justify-between text-sm">
-              <span>{m.entreprises?.nom ?? "Entreprise à confirmer"}</span>
-              <span className="text-ardoise/50">{m.statut}</span>
+        {missions.map((m) => {
+          const activation = activations[m.id];
+          return (
+            <div key={m.id} className="px-4 py-3">
+              <div className="flex justify-between text-sm">
+                <span>{m.entreprises?.nom ?? "Entreprise à confirmer"}</span>
+                <span className="text-ardoise/50">{m.statut}</span>
+              </div>
+              {m.latitude && m.longitude && (
+                <p className="text-xs mt-1">
+                  {activation?.statut === "actif" ? (
+                    <span className="text-vert">
+                      Actif depuis {new Date(activation.heure_activation).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} (détecté automatiquement)
+                    </span>
+                  ) : activation?.statut === "hors_zone" ? (
+                    <span className="text-ocre">Hors zone pour l'instant</span>
+                  ) : (
+                    <span className="text-ardoise/40">En attente de détection…</span>
+                  )}
+                </p>
+              )}
+              {m.service === "service_2_gestion_complete" && m.taux_commission && (
+                <FormulaireVente missionId={m.id} onEnregistre={charger} />
+              )}
             </div>
-            {m.latitude && m.longitude && commercialId && (
-              <BoutonActivation mission={m} commercialId={commercialId} activation={activations[m.id]} onActive={charger} />
-            )}
-            {m.service === "service_2_gestion_complete" && m.taux_commission && (
-              <FormulaireVente missionId={m.id} onEnregistre={charger} />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
