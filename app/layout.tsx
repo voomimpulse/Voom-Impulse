@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { ReactNode } from "react";
+import EnregistrementPWA from "./EnregistrementPWA";
 
 export const metadata = {
   title: "Voom Impulse",
@@ -10,7 +11,10 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr">
-      <body className="font-corps bg-ivoire text-encre">{children}</body>
+      <body className="font-corps bg-ivoire text-encre">
+        <EnregistrementPWA />
+        {children}
+      </body>
     </html>
   );
 }
