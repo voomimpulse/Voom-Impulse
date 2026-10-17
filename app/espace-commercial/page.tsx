@@ -51,6 +51,11 @@ export default function EspaceCommercial() {
       setEnvoi(false);
       return;
     }
+    if (auth.user.identities?.length === 0) {
+      setErreur("Un compte existe déjà avec cet email. Connectez-vous plutôt.");
+      setEnvoi(false);
+      return;
+    }
 
     const { data: commercial, error: erreurCommercial } = await supabase
       .from("commerciaux")

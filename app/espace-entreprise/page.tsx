@@ -30,6 +30,11 @@ export default function EspaceEntreprise() {
       setEnvoi(false);
       return;
     }
+    if (auth.user.identities?.length === 0) {
+      setErreur("Un compte existe déjà avec cet email. Connectez-vous plutôt.");
+      setEnvoi(false);
+      return;
+    }
 
     const { data: entreprise, error: erreurEntreprise } = await supabase
       .from("entreprises")
