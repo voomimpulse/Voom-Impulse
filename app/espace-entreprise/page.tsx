@@ -4,16 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabaseClient";
 
+// Inscription réduite : email + mot de passe, c'est tout. La fiche reste vide
+// ("À compléter") et l'assistant prend le relais pour remplir le compte.
 export default function EspaceEntreprise() {
   const [email, setEmail] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
-  const [nom, setNom] = useState("");
-  const [contact, setContact] = useState("");
-  const [telephone, setTelephone] = useState("");
-  const [secteur, setSecteur] = useState("");
-  const [besoins, setBesoins] = useState("");
-  const [objectifs, setObjectifs] = useState("");
-  const [collaboration, setCollaboration] = useState("");
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState("");
   const router = useRouter();
@@ -36,25 +31,43 @@ export default function EspaceEntreprise() {
       return;
     }
 
-    const { data: entreprise, error: erreurEntreprise } = await supabase
-      .from("entreprises")
-      .insert({
-        nom, contact_nom: contact, contact_telephone: telephone,
-        secteur_activite: secteur, besoins_ressources: besoins,
-        objectifs_commerciaux: objectifs, type_collaboration_souhaite: collaboration || null,
-      })
-      .select()
-      .single();
+    // signUp ne renvoie pas toujours une session (ex : confirmation d'email activée).
+    // Sans session, Supabase ne reçoit pas de JWT et la suite échoue : on se
+    // connecte donc explicitement avant d'appeler le serveur.
+    if (!auth.session) {
+      const { error: erreurConnexion } = await supabase.auth.signInWithPassword({ email, password: motDePasse });
+      if (erreurConnexion) {
+        setErreur("Compte créé, mais connexion automatique impossible. Connectez-vous puis appelez l'assistant. (" + erreurConnexion.message + ")");
+        setEnvoi(false);
+        return;
+      }
+    }
 
-    if (erreurEntreprise || !entreprise) {
-      setErreur("Compte créé mais fiche entreprise non enregistrée : " + (erreurEntreprise?.message ?? ""));
+    // On valide la session en re-téléchargeant l'utilisateur auprès du serveur
+    // d'authentification avant d'appeler l'API.
+    const { data: { user: utilisateurConnecte }, error: erreurGetUser } = await supabase.auth.getUser();
+    if (erreurGetUser || !utilisateurConnecte) {
+      setErreur("Session utilisateur introuvable : " + (erreurGetUser?.message ?? "aucun utilisateur connecté"));
       setEnvoi(false);
       return;
     }
 
-    await supabase.from("profils").insert({ id: auth.user.id, role: "entreprise", entreprise_id: entreprise.id });
+    // La fiche minimale et le profil sont créés côté serveur (aucun blocage RLS).
+    const { data: jetons } = await supabase.auth.getSession();
+    const jeton = jetons.session?.access_token ?? "";
+    const reponse = await fetch("/api/assistant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + jeton },
+      body: JSON.stringify({ action: "inscrire", cible: "entreprise" }),
+    });
+    const resultat = await reponse.json();
+    if (!reponse.ok) {
+      setErreur("Compte créé mais profil non enregistré : " + (resultat.erreur ?? ""));
+      setEnvoi(false);
+      return;
+    }
 
-    router.push("/espace-entreprise/tableau-de-bord");
+    router.push("/assistant");
   }
 
   return (
@@ -62,7 +75,8 @@ export default function EspaceEntreprise() {
       <a href="/" className="text-white/60 text-sm">← Retour</a>
       <h1 className="text-white font-display text-2xl mt-4">Créer votre compte entreprise</h1>
       <p className="text-white/70 text-sm mt-2">
-        Une fois votre compte créé, vous accédez à votre espace pour suivre vos missions.
+        Renseignez seulement votre email et un mot de passe. Ensuite, notre assistant pose
+        quelques questions simples pour remplir votre fiche à votre place.
       </p>
 
       <form onSubmit={creerCompte} className="space-y-3 mt-6">
@@ -76,51 +90,19 @@ export default function EspaceEntreprise() {
           <input required type="password" value={motDePasse} onChange={(e) => setMotDePasse(e.target.value)}
             className="mt-1 w-full border border-white/30 bg-white/10 text-white rounded-sm px-3 py-2 text-sm" />
         </label>
-        <label className="block">
-          <span className="text-xs text-white/70">Nom de l'entreprise</span>
-          <input required value={nom} onChange={(e) => setNom(e.target.value)}
-            className="mt-1 w-full border border-white/30 bg-white/10 text-white rounded-sm px-3 py-2 text-sm" />
-        </label>
-        <label className="block">
-          <span className="text-xs text-white/70">Nom du contact</span>
-          <input required value={contact} onChange={(e) => setContact(e.target.value)}
-            className="mt-1 w-full border border-white/30 bg-white/10 text-white rounded-sm px-3 py-2 text-sm" />
-        </label>
-        <label className="block">
-          <span className="text-xs text-white/70">Téléphone</span>
-          <input required value={telephone} onChange={(e) => setTelephone(e.target.value)}
-            className="mt-1 w-full border border-white/30 bg-white/10 text-white rounded-sm px-3 py-2 text-sm" />
-        </label>
-        <label className="block">
-          <span className="text-xs text-white/70">Secteur d'activité</span>
-          <input value={secteur} onChange={(e) => setSecteur(e.target.value)}
-            className="mt-1 w-full border border-white/30 bg-white/10 text-white rounded-sm px-3 py-2 text-sm" />
-        </label>
-        <label className="block">
-          <span className="text-xs text-white/70">Type de collaboration souhaitée</span>
-          <select required value={collaboration} onChange={(e) => setCollaboration(e.target.value)}
-            className="mt-1 w-full border border-white/30 bg-white/10 text-white rounded-sm px-3 py-2 text-sm">
-            <option value="" className="text-encre">Sélectionner…</option>
-            <option value="service_1_mise_a_disposition" className="text-encre">Mise à disposition de commerciaux</option>
-            <option value="service_2_gestion_complete" className="text-encre">Gestion complète de la prospection</option>
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-xs text-white/70">Vos besoins en ressources</span>
-          <textarea value={besoins} onChange={(e) => setBesoins(e.target.value)} rows={2}
-            className="mt-1 w-full border border-white/30 bg-white/10 text-white rounded-sm px-3 py-2 text-sm" />
-        </label>
-        <label className="block">
-          <span className="text-xs text-white/70">Vos objectifs commerciaux</span>
-          <textarea value={objectifs} onChange={(e) => setObjectifs(e.target.value)} rows={2}
-            className="mt-1 w-full border border-white/30 bg-white/10 text-white rounded-sm px-3 py-2 text-sm" />
-        </label>
 
         {erreur && <p className="text-xs text-ocreclair">{erreur}</p>}
 
         <button disabled={envoi} className="w-full bg-white text-encre font-medium text-sm px-4 py-3 rounded-sm">
           {envoi ? "Création…" : "Créer mon compte"}
         </button>
+
+        <p className="text-center text-xs text-white/60 mt-4">
+          Vous avez déjà un compte ?{" "}
+          <a href="/login" className="text-white underline">
+            Se connecter
+          </a>
+        </p>
       </form>
     </div>
   );

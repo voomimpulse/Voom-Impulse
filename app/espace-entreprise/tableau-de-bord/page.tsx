@@ -122,8 +122,10 @@ export default function TableauDeBordEntreprise() {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) { router.push("/login"); return; }
 
-    const { data: profil } = await supabase.from("profils").select("role, entreprise_id").eq("id", session.session.user.id).single();
+    const { data: profil } = await supabase.from("profils").select("role, entreprise_id, onboarding_termine").eq("id", session.session.user.id).single();
     if (profil?.role !== "entreprise" || !profil.entreprise_id) { router.push("/login"); return; }
+    // Fiche non remplie : retour à l'assistant pour terminer l'inscription.
+    if (profil.onboarding_termine === false) { router.push("/assistant"); return; }
 
     setEntrepriseId(profil.entreprise_id);
     const aujourdhui = new Date().toISOString().slice(0, 10);
@@ -161,7 +163,11 @@ export default function TableauDeBordEntreprise() {
     <div className="min-h-screen bg-ivoire px-5 py-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-xl text-encre">Mon espace entreprise</h1>
-        <a href="/espace-entreprise/stock" className="text-xs text-ardoise/50 mt-1 block">Gérer mes stocks →</a>
+        <div className="flex flex-col items-end gap-1">
+          <a href="/assistant" className="text-xs text-ardoise/50">Assistant →</a>
+          <a href="/espace-entreprise/stock" className="text-xs text-ardoise/50">Gérer mes stocks →</a>
+          <a href="/espace-entreprise/superviseurs" className="text-xs text-ardoise/50">Mes superviseurs →</a>
+        </div>
         <button onClick={async () => { await getSupabase().auth.signOut(); router.push("/"); }} className="text-xs text-ardoise/50">
           Se déconnecter
         </button>

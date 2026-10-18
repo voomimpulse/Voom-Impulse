@@ -145,8 +145,10 @@ export default function TableauDeBordCommercial() {
     const { data: session } = await supabase.auth.getSession();
     if (!session.session) { router.push("/login"); return; }
 
-    const { data: profil } = await supabase.from("profils").select("role, commercial_id").eq("id", session.session.user.id).single();
+    const { data: profil } = await supabase.from("profils").select("role, commercial_id, onboarding_termine").eq("id", session.session.user.id).single();
     if (profil?.role !== "commercial" || !profil.commercial_id) { router.push("/login"); return; }
+    // Profil non rempli : retour à l'assistant pour terminer l'inscription.
+    if (profil.onboarding_termine === false) { router.push("/assistant"); return; }
 
     setCommercialId(profil.commercial_id);
     const aujourdhui = new Date().toISOString().slice(0, 10);
@@ -179,9 +181,12 @@ export default function TableauDeBordCommercial() {
     <div className="min-h-screen bg-ivoire px-5 py-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-xl text-encre">Mon espace commercial</h1>
-        <button onClick={async () => { await getSupabase().auth.signOut(); router.push("/"); }} className="text-xs text-ardoise/50">
-          Se déconnecter
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <a href="/assistant" className="text-xs text-ardoise/50">Assistant →</a>
+          <button onClick={async () => { await getSupabase().auth.signOut(); router.push("/"); }} className="text-xs text-ardoise/50">
+            Se déconnecter
+          </button>
+        </div>
       </div>
 
       <p className="text-xs text-ardoise/40 mt-2">

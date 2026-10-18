@@ -14,6 +14,7 @@ const LIENS_PRINCIPAL = [
   { href: "/admin/missions", label: "Missions" },
   { href: "/admin/stock", label: "Stock" },
   { href: "/admin/factures", label: "Factures" },
+  { href: "/admin/demandes", label: "Demandes assistant" },
 ];
 
 const LIENS_GESTION_COMPLETE = [
@@ -22,12 +23,14 @@ const LIENS_GESTION_COMPLETE = [
   { href: "/admin/missions", label: "Missions (Gestion complète)" },
   { href: "/admin/stock", label: "Stock" },
   { href: "/admin/factures", label: "Factures" },
+  { href: "/admin/demandes", label: "Demandes assistant" },
 ];
 
 const LIENS_MISE_A_DISPOSITION = [
   { href: "/admin", label: "Tableau de bord" },
   { href: "/admin/rattachements", label: "Rattachements (Mise à disposition)" },
   { href: "/admin/factures", label: "Factures" },
+  { href: "/admin/demandes", label: "Demandes assistant" },
 ];
 
 const LABEL_TYPE_ADMIN: Record<TypeAdmin, string> = {

@@ -22,14 +22,59 @@ export default function Login() {
         setErreur(error?.message ?? "Email ou mot de passe incorrect.");
         return;
       }
-      const { data: profil, error: erreurProfil } = await supabase.from("profils").select("role").eq("id", auth.user.id).single();
+      // maybeSingle() au lieu de single() : single() lève "Cannot coerce the result
+      // to a single JSON object" quand aucune ligne n'est renvoyée (ex : compte
+      // créé mais profile jamais inséré suite à un échec d'inscription).
+      const { data: profil, error: erreurProfil } = await supabase
+        .from("profils")
+        .select("role, onboarding_termine")
+        .eq("id", auth.user.id)
+        .maybeSingle();
       if (erreurProfil) {
         setErreur("Erreur profil : " + erreurProfil.message);
         return;
       }
-      if (profil?.role === "admin") router.push("/admin");
-      else if (profil?.role === "entreprise") router.push("/espace-entreprise/tableau-de-bord");
-      else if (profil?.role === "commercial") router.push("/espace-commercial/tableau-de-bord");
+
+      if (!profil) {
+        // Auto-réparation : le compte existe mais aucun profil n'a jamais été
+        // inséré (inscription interrompue). On recrée le profil à partir de la
+        // fiche entreprise liée à cet utilisateur, si elle existe.
+        const { data: entreprise } = await supabase
+          .from("entreprises")
+          .select("id")
+          .eq("user_id", auth.user.id)
+          .maybeSingle();
+
+        if (entreprise) {
+          const { error: erreurReparation } = await supabase
+            .from("profils")
+            .insert({ id: auth.user.id, role: "entreprise", entreprise_id: entreprise.id });
+          if (erreurReparation) {
+            setErreur("Profil manquant, réparation impossible : " + erreurReparation.message);
+            return;
+          }
+          router.push("/espace-entreprise/tableau-de-bord");
+          return;
+        }
+
+        setErreur("Aucun profil associé à ce compte. Créez un compte entreprise ou commercial pour recréer votre fiche.");
+        return;
+      }
+
+      // Inscription incomplète (assistant non terminé) : on renvoie à l'assistant.
+      // Les comptes existants ont onboarding_termine = vrai ou absent : rien ne change.
+      if (
+        (profil.role === "entreprise" || profil.role === "commercial") &&
+        profil.onboarding_termine === false
+      ) {
+        router.push("/assistant");
+        return;
+      }
+
+      if (profil.role === "admin") router.push("/admin");
+      else if (profil.role === "entreprise") router.push("/espace-entreprise/tableau-de-bord");
+      else if (profil.role === "commercial") router.push("/espace-commercial/tableau-de-bord");
+      else if (profil.role === "superviseur") router.push("/espace-superviseur/tableau-de-bord");
       else setErreur("Rôle inconnu.");
     } catch (err: any) {
       setErreur("Erreur technique : " + (err?.message ?? String(err)));
