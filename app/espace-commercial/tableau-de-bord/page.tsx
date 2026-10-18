@@ -372,6 +372,14 @@ export default function TableauDeBordCommercial() {
       {/* ==================================================================== */}
       <main className="max-w-lg mx-auto w-full px-4 -mt-4 space-y-3.5">
 
+        {/* BANNIÈRE GPS : toujours visible */}
+        <div className="bg-[#0B2559]/90 text-white rounded-2xl px-4 py-2.5 flex items-center gap-2.5 shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-vert animate-pulse shrink-0" />
+          <p className="text-[11px] font-medium leading-snug">
+            📍 Laissez cette page ouverte sur le terrain — votre présence est détectée automatiquement.
+          </p>
+        </div>
+
         {/* CARTE 1 : Résumé d'activité */}
         <section className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
           <div className="flex items-start justify-between">
