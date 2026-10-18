@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { getSupabase } from "@/lib/supabaseClient";
 
 // ============================================================================
@@ -330,17 +331,14 @@ export default function TableauDeBordEntreprise() {
         <div className="max-w-lg mx-auto flex items-center justify-between">
           {/* Logo et intitulé */}
           <div className="flex items-center gap-3">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1">
-                <span className="font-display font-black text-xl tracking-wide text-white">
-                  VOOM
-                </span>
-                <span className="text-xs font-bold text-ocre">↗</span>
-              </div>
-              <span className="text-[11px] font-bold tracking-widest text-ocre -mt-1">
-                IMPULSE
-              </span>
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Voom Impulse"
+              width={90}
+              height={36}
+              className="object-contain brightness-0 invert"
+              priority
+            />
 
             <div className="h-8 w-px bg-white/20 mx-1" />
 
