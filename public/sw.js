@@ -1,4 +1,4 @@
-const NOM_CACHE = "voom-impulse-v1";
+const NOM_CACHE = "voom-impulse-v2"; // v2 : purge du cache de l'ancienne version sans la bannière GPS
 const FICHIERS_ESSENTIELS = ["/", "/manifest.json", "/logo.png"];
 
 self.addEventListener("install", (event) => {
